@@ -1,26 +1,21 @@
 import json
 import discord
+from discord import app_commands
 from discord.ext import commands
-from discord_slash import SlashCommand, SlashContext  # Corrected import
-from discord_slash.utils.manage_components import create_select, create_select_option
-from discord_slash.model import SlashMessage
 import asyncio
 import os
 from dotenv import load_dotenv
 
-
 # Load environment variables from .env file
 load_dotenv()
-
 
 intents = discord.Intents.default()
 intents.typing = True
 intents.presences = False
-intents.members = True  # You might need this for member-related events
+intents.members = True
 
 # Initialize the bot with intents
 bot = commands.Bot(command_prefix='!', intents=intents)
-slash = SlashCommand(bot, sync_commands=True)
 
 # Load the teams from the JSON file
 with open('Teams.json', 'r') as teams_file:
@@ -28,6 +23,8 @@ with open('Teams.json', 'r') as teams_file:
 
 # Create a dictionary to map team IDs to team names
 teams = {int(team_id): team_name for team_id, team_name in teams_data.items()}
+
+# Initialize the list of available teams
 available_teams = list(teams.values())
 
 # Define a data structure to store user guesses
@@ -41,19 +38,11 @@ try:
     with open(submits_file, 'r') as submits:
         user_guesses = json.load(submits)
 except FileNotFoundError:
-    pass  # If the file doesn't exist yet, user_guesses will remain an empty dictionary
+    pass
 
-# Initialize the bot
-bot = commands.Bot(command_prefix='!', intents=intents)
-
-
-# Initialize the list of available teams
-available_teams = list(teams.values())
-
-# ... (other code)
-
+# Command to set the registration channel
 @bot.command()
-@commands.has_permissions(administrator=True)  # Add appropriate permission check
+@commands.has_permissions(administrator=True)
 async def setregistrationchannel(ctx, channel: discord.TextChannel):
     # Store the channel ID in a JSON file or a database
     registration_channel_id = channel.id
@@ -61,52 +50,58 @@ async def setregistrationchannel(ctx, channel: discord.TextChannel):
         json.dump({"channel_id": registration_channel_id}, reg_file)
     await ctx.send(f"Registration messages will now be sent to {channel.mention}")
 
-
-@slash.slash(name="register", description="Register your guesses")
-async def register(ctx: SlashContext):
-    user_id = ctx.author.id
+# Slash command to register guesses
+@bot.tree.command(name="register", description="Register your guesses")
+async def register(interaction: discord.Interaction):
+    user_id = interaction.user.id
     if user_id in user_guesses:
-        await ctx.send("You have already registered your guesses.")
+        await interaction.response.send_message("You have already registered your guesses.")
         return
+
+    # Create a temporary list to store available teams for this interaction
+    temp_available_teams = available_teams.copy()
 
     # Create a list to store user's selections
     selected_teams = []
 
     # Iterate until the user has made 16 selections or no teams are left
     for i in range(1, 17):
-        if not available_teams:
-            await ctx.send("No teams left to choose from.")
+        if not temp_available_teams:
+            await interaction.followup.send("No teams left to choose from.")
             break
 
         # Create select menu options
         options = [
-            create_select_option(team, value=team)
-            for team in available_teams
+            discord.SelectOption(label=team, value=team) for team in temp_available_teams
         ]
-        select = create_select(
-            options, placeholder=f"Select the {i} team", custom_id=f"team_selection_{i}"
-        )
+
+        # Create a select menu
+        select_menu = discord.ui.Select(placeholder=f"Select the {i} team", options=options, custom_id=f"team_selection_{i}")
+
+        # Define the callback for the select menu
+        async def select_callback(inter: discord.Interaction):
+            selected_team = inter.data['values'][0]
+            selected_teams.append(selected_team)
+            temp_available_teams.remove(selected_team)
+            await inter.response.defer()
+
+        select_menu.callback = select_callback
 
         # Send the select menu
-        await ctx.send(content="Available teams:", components=[select])
+        view = discord.ui.View()
+        view.add_item(select_menu)
+        await interaction.followup.send("Available teams:", view=view, ephemeral=True)
 
-        # Wait for user interaction
-        interaction = await bot.wait_for(
-            "slash_component", check=lambda i: i.custom_id.startswith(f"team_selection_{i}")
-        )
-
-        # Get the selected team and add it to the list
-        selected_team = interaction.component[0].value
-        selected_teams.append(selected_team)
-        available_teams.remove(selected_team)
+        # Wait for user interaction with the select menu
+        await bot.wait_for('interaction', check=lambda i: i.data.get('custom_id') == f"team_selection_{i}")
 
     user_guesses[user_id] = selected_teams
 
-    # Save user submissions to the JSON file (with team IDs/positions)
+    # Save user submissions to the JSON file
     with open(submits_file, 'w') as submits:
         json.dump(user_guesses, submits)
 
- # Retrieve the registration channel ID from JSON
+    # Retrieve the registration channel ID from JSON
     with open('registration_channel.json', 'r') as reg_file:
         data = json.load(reg_file)
         registration_channel_id = data.get("channel_id")
@@ -114,28 +109,25 @@ async def register(ctx: SlashContext):
     # Send the registration message to the designated channel
     registration_channel = bot.get_channel(registration_channel_id)
     if registration_channel:
-        registration_message = f"{ctx.author.mention} has registered their guess:\n"
+        registration_message = f"{interaction.user.mention} has registered their guess:\n"
         for i, team in enumerate(selected_teams, start=1):
             registration_message += f"{i}. {team}\n"
         await registration_channel.send(registration_message)
     else:
-        await ctx.send("Registration channel not set. Please use !setregistrationchannel to configure it.")
+        await interaction.followup.send("Registration channel not set. Please use !setregistrationchannel to configure it.")
 
-
-# Bot command to display user's guesses
-@bot.command()
+# Hybrid command to display user's guesses
+@bot.hybrid_command(name="myguesses")
 async def myguesses(ctx):
     user_id = ctx.author.id
     if user_id in user_guesses:
         guesses = user_guesses[user_id]
-        formatted_guesses = [f"{i+1}. Team {team}" for i, team in enumerate(guesses)]
-        await ctx.send(f"{ctx.author.name} has guessed the following:\n{', '.join(formatted_guesses)}")
+        formatted_guesses = [f"{i+1}. {teams[team_id]}" for i, team_id in enumerate(guesses)]
+        await ctx.send(f"{ctx.author.name}'s guesses:\n{', '.join(formatted_guesses)}")
     else:
         await ctx.send("You haven't registered your guesses yet.")
-
 
 token = os.environ.get("bot-token")
 
 # Run the bot
 bot.run(token)
-
