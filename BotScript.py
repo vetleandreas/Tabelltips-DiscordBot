@@ -9,12 +9,8 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-intents = discord.Intents.default()
-intents.typing = True
-intents.presences = False
-intents.members = True
+intents = discord.Intents.all()
 
-# Initialize the bot with intents
 bot = commands.Bot(command_prefix='!', intents=intents)
 
 # Load the teams from the JSON file
@@ -39,6 +35,21 @@ try:
         user_guesses = json.load(submits)
 except FileNotFoundError:
     pass
+
+guildid = os.environ.get("guild-id")
+channelid = os.environ.get("channel-id")
+
+@bot.event
+async def on_ready():
+    print(f"Logged in as {bot.user}!")
+    # Sync commands to a specific guild for testing
+    # Replace 'YOUR_GUILD_ID' with your server's ID as an integer
+    await bot.tree.sync(guild=discord.Object(id=guildid))
+    print("Commands synced!")
+    
+    channel = bot.get_channel(channelid)
+    if channel:
+        await channel.send("Commands have been synced!")
 
 # Command to set the registration channel
 @bot.command()
