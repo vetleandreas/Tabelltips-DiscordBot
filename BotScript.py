@@ -71,12 +71,12 @@ async def kamikazetips(interaction: discord.Interaction):
         await interaction.response.send_message("You have already registered your guesses.")
         return
     else:
-        await interaction.response.defer()
+        await interaction.response.defer(ephemeral=True)
 
     temp_available_teams = available_teams.copy()
     selected_teams = []
 
-    for i in range(1, 4):
+    for i in range(1, 17):
         if not temp_available_teams:
             await interaction.followup.send("No teams left to choose from.")
             break
@@ -85,23 +85,32 @@ async def kamikazetips(interaction: discord.Interaction):
 
         select_menu = discord.ui.Select(placeholder=f"Select the {i} team", options=options, custom_id=f"team_selection_{i}")
 
-        async def select_callback(inter: discord.Interaction):
-            selected_team = inter.data['values'][0]
-            selected_teams.append(selected_team)
-            temp_available_teams.remove(selected_team)
-            await inter.response.send_message(f"You selected {selected_team}.", ephemeral=True)
-
-        select_menu.callback = select_callback
-
         view = discord.ui.View()
         view.add_item(select_menu)
-        await interaction.followup.send(f"Please choose the {i} team:", view=view, ephemeral=True)
 
-        # Wait for the user to make a choice
-        await bot.wait_for('interaction', check=lambda i: i.data.get('custom_id') == f"team_selection_{i}" and i.user.id == user_id)
+        select_message = await interaction.followup.send(f"Please choose the {i} team:", view=view, ephemeral=True)
+
+        def check(m):
+            return (m.user.id == user_id and 
+                    m.message.id == select_message.id and 
+                    m.data.get('custom_id') == f"team_selection_{i}")
+
+        try:
+            new_interaction = await bot.wait_for('interaction', check=check, timeout=120.0)  # 2 minutes timeout
+        except asyncio.TimeoutError:
+            await interaction.followup.send("Timed out! Please start over.", ephemeral=True)
+            return
+
+        selected_team = new_interaction.data['values'][0]
+        selected_teams.append(selected_team)
+        temp_available_teams.remove(selected_team)
+
+        # Acknowledge the selection
+        await new_interaction.response.send_message(f"You selected {selected_team}.", ephemeral=True)
 
     user_guesses[user_id] = selected_teams
 
+    # Save user submissions to the JSON file
     with open(submits_file, 'w') as submits:
         json.dump(user_guesses, submits)
 
