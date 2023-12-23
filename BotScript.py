@@ -68,53 +68,40 @@ async def test(interaction: discord.Interaction):
 async def kamikazetips(interaction: discord.Interaction):
     user_id = interaction.user.id
     if user_id in user_guesses:
-        # Send initial response if the user has already registered
         await interaction.response.send_message("You have already registered your guesses.")
         return
     else:
-        # Defer the interaction if processing takes time
         await interaction.response.defer()
 
-    # Create a temporary list to store available teams for this interaction
     temp_available_teams = available_teams.copy()
-
-    # Create a list to store user's selections
     selected_teams = []
 
-    # Iterate until the user has made 16 selections or no teams are left
-    for i in range(1, 17):
+    for i in range(1, 4):
         if not temp_available_teams:
             await interaction.followup.send("No teams left to choose from.")
             break
 
-        # Create select menu options
-        options = [
-            discord.SelectOption(label=team, value=team) for team in temp_available_teams
-        ]
+        options = [discord.SelectOption(label=team, value=team) for team in temp_available_teams]
 
-        # Create a select menu
         select_menu = discord.ui.Select(placeholder=f"Select the {i} team", options=options, custom_id=f"team_selection_{i}")
 
-        # Define the callback for the select menu
         async def select_callback(inter: discord.Interaction):
             selected_team = inter.data['values'][0]
             selected_teams.append(selected_team)
             temp_available_teams.remove(selected_team)
-            await inter.response.defer()
+            await inter.response.send_message(f"You selected {selected_team}.", ephemeral=True)
 
         select_menu.callback = select_callback
 
-        # Send the select menu
         view = discord.ui.View()
         view.add_item(select_menu)
-        await interaction.followup.send("Available teams:", view=view, ephemeral=True)
+        await interaction.followup.send(f"Please choose the {i} team:", view=view, ephemeral=True)
 
-        # Wait for user interaction with the select menu
-        await bot.wait_for('interaction', check=lambda i: i.data.get('custom_id') == f"team_selection_{i}")
+        # Wait for the user to make a choice
+        await bot.wait_for('interaction', check=lambda i: i.data.get('custom_id') == f"team_selection_{i}" and i.user.id == user_id)
 
     user_guesses[user_id] = selected_teams
 
-    # Save user submissions to the JSON file
     with open(submits_file, 'w') as submits:
         json.dump(user_guesses, submits)
 
