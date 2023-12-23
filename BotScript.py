@@ -64,14 +64,16 @@ async def setregistrationchannel(ctx, channel: discord.TextChannel):
 async def test(interaction: discord.Interaction):
     await interaction.response.send_message("Test command works!")
 
-
-# Slash command to register guesses
 @tree.command(name="kamikazetips", description="Register your guesses", guild=discord.Object(int(guildid)))
 async def kamikazetips(interaction: discord.Interaction):
     user_id = interaction.user.id
     if user_id in user_guesses:
+        # Send initial response if the user has already registered
         await interaction.response.send_message("You have already registered your guesses.")
         return
+    else:
+        # Defer the interaction if processing takes time
+        await interaction.response.defer()
 
     # Create a temporary list to store available teams for this interaction
     temp_available_teams = available_teams.copy()
