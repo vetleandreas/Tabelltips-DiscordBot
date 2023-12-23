@@ -48,7 +48,7 @@ async def on_ready():
     await tree.sync(guild=discord.Object(id=int(guildid)))
     channel = bot.get_channel(int(channelid))
     if channel:
-        await channel.send("Bot online!")
+        await channel.send("Kamikazetiden er kommet!")
 
 # Command to set the registration channel
 @bot1.hybrid_command()
@@ -58,17 +58,17 @@ async def setregistrationchannel(ctx, channel: discord.TextChannel):
     registration_channel_id = channel.id
     with open('registration_channel.json', 'w') as reg_file:
         json.dump({"channel_id": registration_channel_id}, reg_file)
-    await ctx.send(f"Registration messages will now be sent to {channel.mention}")
+    await ctx.send(f"Registreringer vil nå bli sendt til {channel.mention}")
     
 @tree.command(name="test", description="A simple test command", guild=discord.Object(int(guildid)))
 async def test(interaction: discord.Interaction):
     await interaction.response.send_message("Test command works!")
 
-@tree.command(name="kamikazetips", description="Register your guesses", guild=discord.Object(int(guildid)))
+@tree.command(name="kamikazetips", description="Registrer ditt kamikazetips", guild=discord.Object(int(guildid)))
 async def kamikazetips(interaction: discord.Interaction):
     user_id = interaction.user.id
     if user_id in user_guesses:
-        await interaction.response.send_message("You have already registered your guesses.")
+        await interaction.response.send_message("Du har allerede registrert ditt kamikazetips.")
         return
     else:
         await interaction.response.defer(ephemeral=True)
@@ -78,17 +78,17 @@ async def kamikazetips(interaction: discord.Interaction):
 
     for i in range(1, 17):
         if not temp_available_teams:
-            await interaction.followup.send("No teams left to choose from.")
+            await interaction.followup.send("Ingen lag igjen å velge mellom.")
             break
 
         options = [discord.SelectOption(label=team, value=team) for team in temp_available_teams]
 
-        select_menu = discord.ui.Select(placeholder=f"Select the {i} team", options=options, custom_id=f"team_selection_{i}")
+        select_menu = discord.ui.Select(placeholder=f"Velg lag for {i}. plass:", options=options, custom_id=f"team_selection_{i}")
 
         view = discord.ui.View()
         view.add_item(select_menu)
 
-        select_message = await interaction.followup.send(f"Please choose the {i} team:", view=view, ephemeral=True)
+        select_message = await interaction.followup.send(f"Velg lag for {i}. plass:", view=view, ephemeral=True)
 
         def check(m):
             return (m.user.id == user_id and 
@@ -98,7 +98,7 @@ async def kamikazetips(interaction: discord.Interaction):
         try:
             new_interaction = await bot.wait_for('interaction', check=check, timeout=120.0)  # 2 minutes timeout
         except asyncio.TimeoutError:
-            await interaction.followup.send("Timed out! Please start over.", ephemeral=True)
+            await interaction.followup.send("Du var superløk og brukte for lang tid. Prøv på nytt og tenk raskere >:( ", ephemeral=True)
             return
 
         selected_team = new_interaction.data['values'][0]
@@ -106,7 +106,7 @@ async def kamikazetips(interaction: discord.Interaction):
         temp_available_teams.remove(selected_team)
 
         # Acknowledge the selection
-        await new_interaction.response.send_message(f"You selected {selected_team}.", ephemeral=True)
+        await new_interaction.response.send_message(f"Du valgte {selected_team} for {i}.plass.", ephemeral=True)
 
     user_guesses[user_id] = selected_teams
 
@@ -122,7 +122,7 @@ async def kamikazetips(interaction: discord.Interaction):
     # Send the registration message to the designated channel
     registration_channel = bot.get_channel(registration_channel_id)
     if registration_channel:
-        registration_message = f"{interaction.user.mention} has registered their guess:\n"
+        registration_message = f"{interaction.user.mention} har registrert sitt kamikazetips:\n"
         for i, team in enumerate(selected_teams, start=1):
             registration_message += f"{i}. {team}\n"
         await registration_channel.send(registration_message)
@@ -138,7 +138,7 @@ async def myguesses(ctx):
         formatted_guesses = [f"{i+1}. {teams[team_id]}" for i, team_id in enumerate(guesses)]
         await ctx.send(f"{ctx.author.name}'s guesses:\n{', '.join(formatted_guesses)}")
     else:
-        await ctx.send("You haven't registered your guesses yet.")
+        await ctx.send("Du har ikke kamikazet inn noe tips enda.")
         
 @bot1.hybrid_command(name='sync', description='Owner only')
 async def sync(interaction: discord.Interaction):
