@@ -44,9 +44,6 @@ async def on_ready():
     print(f"Logged in as {bot.user}!")
     # Sync commands to a specific guild for testing
     # Replace 'YOUR_GUILD_ID' with your server's ID as an integer
-  #  await bot.tree.sync(guild=discord.Object(id=guildid))
-    print("Commands synced!")
-    
     channel = bot.get_channel(channelid)
     if channel:
         await channel.send("Bot online!")
@@ -137,14 +134,15 @@ async def myguesses(ctx):
         await ctx.send(f"{ctx.author.name}'s guesses:\n{', '.join(formatted_guesses)}")
     else:
         await ctx.send("You haven't registered your guesses yet.")
-        
 @bot.command()
+@commands.has_permissions(administrator=True)  # Restrict this command to administrators
 async def synccmd(ctx):
-  fmt = await bot.tree.sync(guild=discord.Object(id=guildid))
-  await ctx.send(
-    f"Syncd {len(fmt)} commands to the crrent server"
-  )
-  return        
+    guild_id = guildid  # Replace with your guild's ID
+    try:
+        synced_commands = await bot.tree.sync(guild=discord.Object(id=guild_id))
+        await ctx.send(f"Synced {len(synced_commands)} commands to the current server.")
+    except Exception as e:
+        await ctx.send(f"An error occurred while syncing: {e}")
 
 token = os.environ.get("bot-token")
 
