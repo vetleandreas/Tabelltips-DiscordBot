@@ -10,8 +10,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 intents = discord.Intents.all()
-
-bot = commands.Bot(command_prefix='!', intents=intents)
+bot = discord.Client(command_prefix='!', intents=intents)
+bot1 = commands.Bot(command_prefix='!', intents=intents)
+tree = app_commands.CommandTree(bot)
 
 # Load the teams from the JSON file
 with open('Teams.json', 'r') as teams_file:
@@ -44,12 +45,13 @@ async def on_ready():
     print(f"Logged in as {bot.user}!")
     # Sync commands to a specific guild for testing
     # Replace 'YOUR_GUILD_ID' with your server's ID as an integer
+    await tree.sync(guild=discord.Object(id=int(guildid)))
     channel = bot.get_channel(int(channelid))
     if channel:
         await channel.send("Bot online!")
 
 # Command to set the registration channel
-@bot.command()
+@bot1.hybrid_command()
 @commands.has_permissions(administrator=True)
 async def setregistrationchannel(ctx, channel: discord.TextChannel):
     # Store the channel ID in a JSON file or a database
@@ -57,10 +59,15 @@ async def setregistrationchannel(ctx, channel: discord.TextChannel):
     with open('registration_channel.json', 'w') as reg_file:
         json.dump({"channel_id": registration_channel_id}, reg_file)
     await ctx.send(f"Registration messages will now be sent to {channel.mention}")
+    
+@tree.command(name="test", description="A simple test command", guild=discord.Object(int(guildid)))
+async def test(interaction: discord.Interaction):
+    await interaction.response.send_message("Test command works!")
+
 
 # Slash command to register guesses
-@bot.tree.command(name="register", description="Register your guesses")
-async def register(interaction: discord.Interaction):
+@tree.command(name="kamikazetips", description="Register your guesses", guild=discord.Object(int(guildid)))
+async def kamikazetips(interaction: discord.Interaction):
     user_id = interaction.user.id
     if user_id in user_guesses:
         await interaction.response.send_message("You have already registered your guesses.")
@@ -125,7 +132,7 @@ async def register(interaction: discord.Interaction):
         await interaction.followup.send("Registration channel not set. Please use !setregistrationchannel to configure it.")
 
 # Hybrid command to display user's guesses
-@bot.hybrid_command(name="myguesses")
+@bot1.hybrid_command(name="myguesses")
 async def myguesses(ctx):
     user_id = ctx.author.id
     if user_id in user_guesses:
@@ -135,7 +142,12 @@ async def myguesses(ctx):
     else:
         await ctx.send("You haven't registered your guesses yet.")
         
-@bot.command()
+@bot1.hybrid_command(name='sync', description='Owner only')
+async def sync(interaction: discord.Interaction):
+    await bot.tree.sync()
+    print('Command tree synced.')
+        
+@tree.command()
 @commands.has_permissions(administrator=True)  # Restrict this command to administrators
 async def synccmd(ctx):
     guild_id = int(guildid)  # Replace with your guild's ID
@@ -145,6 +157,12 @@ async def synccmd(ctx):
     except Exception as e:
         await ctx.send(f"An error occurred while syncing: {e}")
 
+@bot1.hybrid_command(name = "localsync", description = "My first application Command", guild=discord.Object(int(guildid))) #Add the guild ids in which the slash command will appear. If it should be in all, remove the argument, but note that it will take some time (up to an hour) to register the command if it's for all guilds.
+async def localsync(ctx: commands.Context):         
+    await tree.sync(guild=discord.Object(id=int(guildid)))
+    await ctx.send("Localsync done")
+    print("Commands local synced")
+    
 token = os.environ.get("bot-token")
 
 # Run the bot
