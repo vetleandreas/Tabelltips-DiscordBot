@@ -44,7 +44,7 @@ async def on_ready():
     print(f"Logged in as {bot.user}!")
     # Sync commands to a specific guild for testing
     # Replace 'YOUR_GUILD_ID' with your server's ID as an integer
-    channel = bot.get_channel(channelid)
+    channel = bot.get_channel(int(channelid))
     if channel:
         await channel.send("Bot online!")
 
@@ -134,10 +134,11 @@ async def myguesses(ctx):
         await ctx.send(f"{ctx.author.name}'s guesses:\n{', '.join(formatted_guesses)}")
     else:
         await ctx.send("You haven't registered your guesses yet.")
+        
 @bot.command()
 @commands.has_permissions(administrator=True)  # Restrict this command to administrators
 async def synccmd(ctx):
-    guild_id = guildid  # Replace with your guild's ID
+    guild_id = int(guildid)  # Replace with your guild's ID
     try:
         synced_commands = await bot.tree.sync(guild=discord.Object(id=guild_id))
         await ctx.send(f"Synced {len(synced_commands)} commands to the current server.")
