@@ -51,7 +51,7 @@ async def on_ready():
         await channel.send("Kamikazetiden er kommet!")
 
 # Command to set the registration channel
-@bot1.hybrid_command()
+@tree.command()
 @commands.has_permissions(administrator=True)
 async def setregistrationchannel(ctx, channel: discord.TextChannel):
     # Store the channel ID in a JSON file or a database
@@ -62,7 +62,7 @@ async def setregistrationchannel(ctx, channel: discord.TextChannel):
     
 @tree.command(name="test", description="A simple test command", guild=discord.Object(int(guildid)))
 async def test(interaction: discord.Interaction):
-    await interaction.response.send_message("Test command works!")
+    await interaction.response.send_message("Jeg er kamikazetipseren, på vei i lufta til en polkagris nær deg.")
 
 @tree.command(name="kamikazetips", description="Registrer ditt kamikazetips", guild=discord.Object(int(guildid)))
 async def kamikazetips(interaction: discord.Interaction):
@@ -130,8 +130,8 @@ async def kamikazetips(interaction: discord.Interaction):
         await interaction.followup.send("Registration channel not set. Please use !setregistrationchannel to configure it.")
 
 # Hybrid command to display user's guesses
-@bot1.hybrid_command(name="myguesses")
-async def myguesses(ctx):
+@tree.command(name="tipsetmitt", description="Se kamikazetipset ditt", guild=discord.Object(int(guildid)))
+async def tipsetmitt(ctx):
     user_id = ctx.author.id
     if user_id in user_guesses:
         guesses = user_guesses[user_id]
@@ -140,12 +140,19 @@ async def myguesses(ctx):
     else:
         await ctx.send("Du har ikke kamikazet inn noe tips enda.")
         
-@bot1.hybrid_command(name='sync', description='Owner only')
-async def sync(interaction: discord.Interaction):
+@tree.command(name='globalsync', description='Owner only')
+@commands.has_permissions(administrator=True)  # Restrict this command to administrators
+async def globalsync(interaction: discord.Interaction):
     await bot.tree.sync()
     print('Command tree synced.')
         
-@tree.command()
+@tree.command(name='localglobalsync', description='Owner only')
+@commands.has_permissions(administrator=True)  # Restrict this command to administrators
+async def localglobalsync(interaction: discord.Interaction):
+    await bot.tree.sync()
+    print('Command tree synced.')    
+    
+@tree.command(name = "localsync", description = "Synkroniser commands lokalt i serveren", guild=discord.Object(int(guildid)))
 @commands.has_permissions(administrator=True)  # Restrict this command to administrators
 async def synccmd(ctx):
     guild_id = int(guildid)  # Replace with your guild's ID
@@ -155,11 +162,12 @@ async def synccmd(ctx):
     except Exception as e:
         await ctx.send(f"An error occurred while syncing: {e}")
 
-@bot1.hybrid_command(name = "localsync", description = "My first application Command", guild=discord.Object(int(guildid))) #Add the guild ids in which the slash command will appear. If it should be in all, remove the argument, but note that it will take some time (up to an hour) to register the command if it's for all guilds.
-async def localsync(ctx: commands.Context):         
-    await tree.sync(guild=discord.Object(id=int(guildid)))
-    await ctx.send("Localsync done")
-    print("Commands local synced")
+#@tree.command(name = "localsync", description = "local synkronisering", guild=discord.Object(int(guildid))) #Add the guild ids in which the slash command will appear. If it should be in all, remove the argument, but note that it will take some time (up to an hour) to register the command if it's for all guilds.
+#@commands.has_permissions(administrator=True)  # Restrict this command to administrators
+#async def localsync(ctx: commands.Context):         
+  #  await tree.sync(guild=discord.Object(id=int(guildid)))
+ #   await ctx.send("Localsync done")
+#    print("Commands local synced")
     
 token = os.environ.get("bot-token")
 
