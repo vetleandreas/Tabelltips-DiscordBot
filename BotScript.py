@@ -11,7 +11,6 @@ load_dotenv()
 
 intents = discord.Intents.all()
 bot = discord.Client(command_prefix='!', intents=intents)
-bot1 = commands.Bot(command_prefix='!', intents=intents)
 tree = app_commands.CommandTree(bot)
 
 # Load the teams from the JSON file
@@ -41,17 +40,21 @@ async def on_ready():
             user_guesses = json.load(submits_file)
     except FileNotFoundError:
         user_guesses = {}
-    print(f"Logged in as {bot.user}!")
-    print("Teams:", teams)
-    print("User guesses:", user_guesses)
+  #  print(f"Logged in as {bot.user}!")
+ #   print("Teams:", teams)
+   # print("User guesses:", user_guesses)
     # Sync commands to a specific guild for testing
     # Replace 'YOUR_GUILD_ID' with your server's ID as an integer
-    await tree.sync(guild=discord.Object(id=int(guildid)))
-    channel = bot.get_channel(int(channelid))
-    if channel:
-        await channel.send("Kamikazetiden er kommet!")
+    await bot.wait_until_ready()
+    await tree.sync()  # Syncs commands globally
+    print(f"Logged in as {bot.user} and commands synced globally!")
+
+  #For debugging på online/offline tider
+    #  channel = bot.get_channel(int(channelid))
+   # if channel:
+    #    await channel.send("Kamikazetiden er kommet!")
         
-@tree.command(name="settkamikazekanal", description="Setter kanalen Kamikazetips kommer i.", guild=discord.Object(int(guildid)))
+@tree.command(name="settkamikazekanal", description="Setter kanalen Kamikazetips kommer i.")
 @commands.has_permissions(administrator=True)
 async def setregistrationchannel(interaction: discord.Interaction, channel: discord.TextChannel):
     registration_channel_id = channel.id
@@ -61,11 +64,12 @@ async def setregistrationchannel(interaction: discord.Interaction, channel: disc
     await interaction.response.send_message(f"Registreringer vil nå bli sendt til {channel.mention}")
 
     
-@tree.command(name="test", description="A simple test command", guild=discord.Object(int(guildid)))
+@tree.command(name="test", description="Test for å se at botten skriver til serveren.")
+@commands.has_permissions(administrator=True)
 async def test(interaction: discord.Interaction):
     await interaction.response.send_message("Jeg er kamikazetipseren, på vei i lufta til en polkagris nær deg.")
 
-@tree.command(name="kamikazetips", description="Registrer ditt kamikazetips", guild=discord.Object(int(guildid)))
+@tree.command(name="kamikazetips", description="Registrer ditt kamikazetips")
 async def kamikazetips(interaction: discord.Interaction):
     global user_guesses  # Ensure user_guesses is accessible
 
@@ -133,7 +137,7 @@ async def kamikazetips(interaction: discord.Interaction):
     else:
         await interaction.followup.send("Registreringskanalen er ikke satt. Vennligst bruk !setregistrationchannel for å konfigurere den.")
 
-@tree.command(name="tipsetmitt", description="Se kamikazetipset ditt", guild=discord.Object(int(guildid)))
+@tree.command(name="tipsetmitt", description="Se kamikazetipset ditt")
 async def tipsetmitt(interaction: discord.Interaction):
     user_id = str(interaction.user.id)  # Ensure user_id is a string
     if user_id in user_guesses:
@@ -149,14 +153,8 @@ async def tipsetmitt(interaction: discord.Interaction):
 async def globalsync(interaction: discord.Interaction):
     await bot.tree.sync()
     print('Command tree synced.')
-        
-@tree.command(name='localglobalsync', description='Owner only')
-@commands.has_permissions(administrator=True)  # Restrict this command to administrators
-async def localglobalsync(interaction: discord.Interaction):
-    await bot.tree.sync()
-    print('Command tree synced.')    
     
-@tree.command(name="localsync", description="Synkroniser commands lokalt i serveren", guild=discord.Object(int(guildid)))
+@tree.command(name="localsync", description="Synkroniser commands lokalt i serveren")
 @commands.has_permissions(administrator=True)
 async def synccmd(interaction: discord.Interaction):
     guild_id = int(guildid)
@@ -167,15 +165,6 @@ async def synccmd(interaction: discord.Interaction):
         await interaction.followup.send(f"Synced {len(synced_commands)} commands to the current server.")
     except Exception as e:
         await interaction.followup.send(f"An error occurred while syncing: {e}")
-
-
-
-#@tree.command(name = "localsync", description = "local synkronisering", guild=discord.Object(int(guildid))) #Add the guild ids in which the slash command will appear. If it should be in all, remove the argument, but note that it will take some time (up to an hour) to register the command if it's for all guilds.
-#@commands.has_permissions(administrator=True)  # Restrict this command to administrators
-#async def localsync(ctx: commands.Context):         
-  #  await tree.sync(guild=discord.Object(id=int(guildid)))
- #   await ctx.send("Localsync done")
-#    print("Commands local synced")
     
 token = os.environ.get("bot-token")
 
