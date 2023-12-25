@@ -77,9 +77,9 @@ async def setregistrationchannel(interaction: discord.Interaction, channel: disc
 async def test(interaction: discord.Interaction):
     await interaction.response.send_message("Jeg er kamikazetipseren, på vei i lufta til en polkagris nær deg.")
 
-@tree.command(name="devkamikazetips", description="Registrer ditt kamikazetips", guild=discord.Object(int(guildid)))
-async def kamikazetips(interaction: discord.Interaction):
-    user_id = str(interaction.user.id)
+@tree.command(name="dev4kamikazetips", description="Registrer ditt kamikazetips", guild=discord.Object(int(guildid)))
+async def dev4kamikazetips(interaction: discord.Interaction):
+    user_id = interaction.user.id
     if user_id in user_guesses:
         await interaction.response.send_message("Du har allerede registrert ditt kamikazetips.")
         return
@@ -111,7 +111,7 @@ async def kamikazetips(interaction: discord.Interaction):
         try:
             new_interaction = await bot.wait_for('interaction', check=check, timeout=120.0)  # 2 minutes timeout
         except asyncio.TimeoutError:
-            await interaction.followup.send("Du var løk og brukte for lang tid. Prøv på nytt og tenk raskere >:( ", ephemeral=True)
+            await interaction.followup.send("Du var superløk og brukte for lang tid. Prøv på nytt og tenk raskere >:( ", ephemeral=True)
             return
 
         selected_team = new_interaction.data['values'][0]
@@ -123,46 +123,28 @@ async def kamikazetips(interaction: discord.Interaction):
 
     user_guesses[user_id] = selected_teams
 
-     # Save user submissions to the JSON file
+    # Save user submissions to the JSON file
     with open(submits_file, 'w') as submits:
         json.dump(user_guesses, submits)
 
     # Retrieve the registration channel ID for the current guild from JSON
-    guild_id = interaction.guild_id
+    guild_id = interaction.guild.id  # Get the current guild ID
     registration_channel_id = None
-    try:
-        with open('registration_channel.json', 'r') as reg_file:
-            registration_channels = json.load(reg_file)
-            registration_channel_id = registration_channels.get(str(guild_id))
-        print(registration_channel_id)
-    except (FileNotFoundError, json.JSONDecodeError):
-        pass  # Handle error or file not found
-
-    user_id_str = int(interaction.user.id)
-    print(user_id_str)
-    print(user_guesses)
-    print(f"Checking if user {user_id_str} is in user_guesses...")
-    if user_id_str in user_guesses:
-        print("User is in user_guesses, preparing registration message...")
-     
-        registration_message = f"{interaction.user.mention} har registrert sitt kamikazetips:\n"
-        for i, team_name in enumerate(user_guesses[user_id], start=1):
-            registration_message += f"{i}. {team_name}\n"  # team_name is already the name, not an ID
-
+    with open('registration_channel.json', 'r') as reg_file:
+        registration_channels = json.load(reg_file)
+        registration_channel_id = registration_channels.get(str(guild_id))  # Fetch the channel ID for this guild
     
-        # Send the registration message to the designated channel
-        if registration_channel_id:
-            registration_channel = bot.get_channel(registration_channel_id)
-            if registration_channel:
-                await registration_channel.send(registration_message)
-            else:
-                await interaction.followup.send("Kan ikke finne registreringskanalen. Vennligst sett den opp på nytt.")
-        else:
-            await interaction.followup.send("Registreringskanalen er ikke satt. Vennligst bruk settkamikazekanal for å konfigurere den.")
+    # Send the registration message to the designated channel
+    registration_channel = bot.get_channel(registration_channel_id)
+    if registration_channel:
+        registration_message = f"{interaction.user.mention} har registrert sitt kamikazetips:\n"
+        for i, team in enumerate(selected_teams, start=1):
+            registration_message += f"{i}. {team}\n"
+        await registration_channel.send(registration_message)
     else:
-        print(f"{user_id_str} is not in {user_guesses}, sending no registration message...")
-        await interaction.followup.send("Du har ikke registrert noen kamikazetips enda.")
+        await interaction.followup.send("Registration channel not set. Please use !setregistrationchannel to configure it.")
 
+   
 @tree.command(name="devtipsetmitt", description="Se kamikazetipset ditt", guild=discord.Object(int(guildid)))
 async def tipsetmitt(interaction: discord.Interaction):
     user_id = str(interaction.user.id)  # Ensure user_id is a string
@@ -173,7 +155,7 @@ async def tipsetmitt(interaction: discord.Interaction):
     else:
         await interaction.response.send_message("Du har ikke kamikazet inn noe tips enda.")
 
-@tree.command(name='devglobalsync', description='Owner only')
+@tree.command(name='xglobalsync', description='Owner only')
 @commands.has_permissions(administrator=True)  # Restrict this command to administrators
 async def globalsync(interaction: discord.Interaction):
     await interaction.response.defer()
