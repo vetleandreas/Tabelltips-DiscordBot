@@ -52,7 +52,7 @@ async def on_ready():
 #       await channel.send("Kamikazetiden er kommet!")
 
 
-@tree.command(name="settabelltipskanal", description="Setter kanalen Tabelltips kommer i.")
+@tree.command(name="settkamikazekanal", description="Setter kanalen Kamikazetips kommer i.")
 @commands.has_permissions(manage_guild=True)
 async def setregistrationchannel(interaction: discord.Interaction, channel: discord.TextChannel):
     guild_id = interaction.guild_id  # Get the guild ID
@@ -77,13 +77,13 @@ async def setregistrationchannel(interaction: discord.Interaction, channel: disc
 @tree.command(name="test", description="Tester at boten er oppe - returnerer en melding.")
 @commands.has_permissions(manage_guild=True)
 async def test(interaction: discord.Interaction):
-    await interaction.response.send_message("Jeg lagrer tabelltipset ditt i hjernen min, men du må bruke din egen for å komme fram til det rette svaret - så fremt du har en. Tiden vil vise..")
+    await interaction.response.send_message("Jeg er kamikazetipseren, på vei i lufta til en polkagris nær deg.")
 
-@tree.command(name="tabelltips", description="Registrer ditt tabelltips med denne kommandoen. Klarer du se inn i fremtiden?")
-async def tabelltips(interaction: discord.Interaction):
+@tree.command(name="kamikazetips", description="Registrer ditt kamikazetips")
+async def kamikazetips(interaction: discord.Interaction):
     user_id = interaction.user.id
     if user_id in user_guesses:
-        await interaction.response.send_message("Du har allerede registrert ditt tabelltips.")
+        await interaction.response.send_message("Du har allerede registrert ditt kamikazetips.")
         return
     else:
         await interaction.response.defer(ephemeral=True)
@@ -113,7 +113,7 @@ async def tabelltips(interaction: discord.Interaction):
         try:
             new_interaction = await bot.wait_for('interaction', check=check, timeout=120.0)  # 2 minutes timeout
         except asyncio.TimeoutError:
-            await interaction.followup.send("Du var løk og brukte for lang tid. Prøv på nytt og tenk raskere >:( ", ephemeral=True)
+            await interaction.followup.send("Du var superløk og brukte for lang tid. Prøv på nytt og tenk raskere >:( ", ephemeral=True)
             return
 
         selected_team = new_interaction.data['values'][0]
@@ -139,22 +139,22 @@ async def tabelltips(interaction: discord.Interaction):
     # Send the registration message to the designated channel
     registration_channel = bot.get_channel(registration_channel_id)
     if registration_channel:
-        registration_message = f"{interaction.user.mention} har registrert sitt tabelltips:\n"
+        registration_message = f"{interaction.user.mention} har registrert sitt kamikazetips:\n"
         for i, team in enumerate(selected_teams, start=1):
             registration_message += f"{i}. {team}\n"
         await registration_channel.send(registration_message)
     else:
-        await interaction.followup.send("Registreringen må konfigureres. Administrator må kjøre /settabelltipskanal.")
+        await interaction.followup.send("Registreringen må konfigureres. Administrator må kjøre /settkamikazekanal.")
    
-@tree.command(name="tipsetmitt", description="Se tabelltipset ditt")
+@tree.command(name="tipsetmitt", description="Se kamikazetipset ditt")
 async def tipsetmitt(interaction: discord.Interaction):
     user_id = interaction.user.id
     if user_id in user_guesses:
         team_names = user_guesses[user_id]
-        formatted_guesses = [f"{i+1}. {team_name}\n" for i, team_name in enumerate(team_names)]
-        await interaction.response.send_message(f"{interaction.user.mention}'s tabelltips:\n{', '.join(formatted_guesses)}")
+        formatted_guesses = [f"{i+1}. {team_name}" for i, team_name in enumerate(team_names)]
+        await interaction.response.send_message(f"{interaction.user.mention}'s kamikazetips:\n{', '.join(formatted_guesses)}")
     else:
-        await interaction.response.send_message("Du har ikke registrert noen tips enda.")
+        await interaction.response.send_message("Du har ikke kamikazet inn noe tips enda.")
 
 @tree.command(name='globalsync', description='Global sync kun for bot-eier.')
 async def globalsync(interaction: discord.Interaction):
