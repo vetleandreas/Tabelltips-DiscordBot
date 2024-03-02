@@ -87,7 +87,7 @@ async def test(interaction: discord.Interaction):
 
 @tree.command(name="tabelltips", description="Registrer ditt tabelltips med denne kommandoen. Klarer du se inn i fremtiden?")
 async def tabelltips(interaction: discord.Interaction):
-    user_id = interaction.user.id
+    user_id = str(interaction.user.id)
     if user_id in user_guesses:
         await interaction.response.send_message("Du har allerede registrert ditt tabelltips.")
         return
@@ -161,7 +161,7 @@ async def tipsetmitt(interaction: discord.Interaction):
         await interaction.response.send_message(f"{interaction.user.mention}'s tabelltips:\n{''.join(formatted_guesses)}")
     else:
         await interaction.response.send_message("Du har ikke registrert noen tips enda.")
-        
+
 @tree.command(name='globalsync', description='Global sync kun for bot-eier.')
 async def globalsync(interaction: discord.Interaction):
     if int(interaction.user.id) != int(adminid):
