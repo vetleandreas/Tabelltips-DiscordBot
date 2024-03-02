@@ -152,7 +152,7 @@ async def tipsetmitt(interaction: discord.Interaction):
     if user_id in user_guesses:
         team_names = user_guesses[user_id]
         formatted_guesses = [f"{i+1}. {team_name}\n" for i, team_name in enumerate(team_names)]
-        await interaction.response.send_message(f"{interaction.user.mention}'s tabelltips:\n{(formatted_guesses)}")
+        await interaction.response.send_message(f"{interaction.user.mention}'s tabelltips:\n{''.join(formatted_guesses)}")
     else:
         await interaction.response.send_message("Du har ikke registrert noen tips enda.")
 
