@@ -87,7 +87,7 @@ async def test(interaction: discord.Interaction):
 
 @tree.command(name="tabelltips", description="Registrer ditt tabelltips med denne kommandoen. Klarer du se inn i fremtiden?")
 async def tabelltips(interaction: discord.Interaction):
-    user_id = str(interaction.user.id)
+    user_id = interaction.user.id
     if user_id in user_guesses:
         await interaction.response.send_message("Du har allerede registrert ditt tabelltips.")
         return
