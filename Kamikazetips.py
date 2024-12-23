@@ -43,14 +43,20 @@ adminid = os.environ.get("admin-id")
 
 @bot.event
 async def on_ready():
+    global user_guesses  # Ensure you are modifying the global variable
     print(f"Logged in as {bot.user}!")
-    # Sync commands to a specific guild for testing
-    # Replace 'YOUR_GUILD_ID' with your server's ID as an integer
-    await tree.sync(guild=discord.Object(id=int(guildid)))
-#    channel = bot.get_channel(int(channelid))
-#    if channel:
-#       await channel.send("Kamikazetiden er kommet!")
 
+    # Load user guesses from submits.json
+    try:
+        with open(submits_file, 'r') as submits:
+            user_guesses = json.load(submits)
+            print("Loaded user submissions from file.")
+    except FileNotFoundError:
+        print("submits.json not found. Starting with empty user guesses.")
+        user_guesses = {}
+
+    # Sync commands to a specific guild for testing
+    await tree.sync(guild=discord.Object(id=int(guildid)))
 
 @tree.command(name="settkamikazekanal", description="Setter kanalen Kamikazetips kommer i.")
 @commands.has_permissions(manage_guild=True)
