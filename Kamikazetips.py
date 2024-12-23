@@ -50,7 +50,8 @@ async def on_ready():
     try:
         with open(submits_file, 'r') as submits:
             user_guesses = json.load(submits)
-            print("Loaded user submissions from file.")
+            print("User guesses loaded:", user_guesses)
+
     except FileNotFoundError:
         print("submits.json not found. Starting with empty user guesses.")
         user_guesses = {}
