@@ -155,7 +155,7 @@ async def kamikazetips(interaction: discord.Interaction):
    
 @tree.command(name="tipsetmitt", description="Se kamikazetipset ditt")
 async def tipsetmitt(interaction: discord.Interaction):
-    user_id = interaction.user.id
+    user_id = str(interaction.user.id)
     if user_id in user_guesses:
         team_names = user_guesses[user_id]
         formatted_guesses = [f"{i+1}. {team_name}" for i, team_name in enumerate(team_names)]
