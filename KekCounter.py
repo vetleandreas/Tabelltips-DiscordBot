@@ -57,7 +57,7 @@ async def kekw_leaderboard(interaction: discord.Interaction, channel_id: int):
     response = "**:kekw: Leaderboard for last month:**\n"
     for i, (message, count) in enumerate(leaderboard, start=1):
         message_link = f"https://discord.com/channels/{message.guild.id}/{message.channel.id}/{message.id}"
-        response += f"{i}. [Message Link]({message_link}) by <@{message.author.id}> - {count} :kekw:\n"
+        response += f"{i}. [Message Link]({message_link}) av <@{message.author.id}> - {count} :kekw:\n"
 
     await interaction.response.send_message(response)
 
