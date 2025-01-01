@@ -15,6 +15,7 @@ bot = discord.Client(command_prefix='!', intents=intents)
 bot1 = commands.Bot(command_prefix='!', intents=intents)
 tree = app_commands.CommandTree(bot)
 
+adminid = os.environ.get("admin-id")
 
 # Sync commands for the bot
 @bot.event
@@ -61,6 +62,18 @@ async def kekw_leaderboard(interaction: discord.Interaction, channel_id: int):
 
     await interaction.response.send_message(response)
 
+@tree.command(name='globalsync', description='Global sync meme kun for bot-eier.')
+async def globalsync(interaction: discord.Interaction):
+    if int(interaction.user.id) != int(adminid):
+        await interaction.response.send_message("Du er ikke bot-eier.")
+        return
+
+    await interaction.response.defer()
+    try:
+        synced_commands = await tree.sync()
+        await interaction.followup.send(f"Synced {len(synced_commands)} commands globally.")
+    except Exception as e:
+        await interaction.followup.send(f"An error occurred while syncing globally: {e}")
 
 token = os.environ.get("bot-token")
 
