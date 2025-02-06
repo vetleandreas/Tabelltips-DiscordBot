@@ -76,38 +76,33 @@ async def kekw_leaderboard(interaction: discord.Interaction):
 
 
 @tree.command(name="månedensmemes", description="Generate a leaderboard of messages with :VKek: reactions in a specific channel")
-@checks.has_permissions(administrator=True)  # Built-in check for admin permissions
+@checks.has_permissions(administrator=True)
 async def kekw_leaderboard(interaction: discord.Interaction):
-    """Generate a leaderboard for the top messages with :VKek: reactions in the last month in a specific channel."""
-    # Define the specific channel ID
-    channel_id = 1157043422436266075  # Replace with your channel ID
+    await interaction.response.defer()  # Acknowledge early to prevent timeout
+
+    channel_id = 1157043422436266075
     channel = bot.get_channel(channel_id)
 
     if channel is None:
-        await interaction.response.send_message(f"Could not find the specified channel (ID: {channel_id}).")
+        await interaction.followup.send(f"Could not find the specified channel (ID: {channel_id}).")
         return
 
-    # Define the time range (last month)
     now = datetime.utcnow()
     start_of_month = (now.replace(day=1) - timedelta(days=1)).replace(day=1)
     end_of_last_month = start_of_month + timedelta(days=31) - timedelta(days=now.day)
 
     leaderboard = []
-    target_emoji = discord.PartialEmoji(name="VKek", id=1086686017555271721)  # Custom emoji name and ID
+    target_emoji = discord.PartialEmoji(name="VKek", id=1086686017555271721)
 
-    # Scan through messages in the specified time range
-    async for message in channel.history(after=start_of_month, before=end_of_last_month, limit=None):
-        if message.reactions:
-            for reaction in message.reactions:
-                if reaction.emoji == target_emoji:
-                    leaderboard.append((message, reaction.count))
+    async for message in channel.history(after=start_of_month, before=end_of_last_month, limit=1000):  # Limit to prevent timeouts
+        for reaction in message.reactions:
+            if reaction.emoji == target_emoji:
+                leaderboard.append((message, reaction.count))
 
-    # Sort by reaction count (descending) and limit to top 10
     leaderboard = sorted(leaderboard, key=lambda x: x[1], reverse=True)[:10]
 
-    # Generate the response
     if not leaderboard:
-        await interaction.response.send_message("No :VKek: reactions were found in the specified time range.")
+        await interaction.followup.send("No :VKek: reactions were found in the specified time range.")
         return
 
     response = "**Fugtige Memes Leaderboard**\n"
@@ -115,8 +110,8 @@ async def kekw_leaderboard(interaction: discord.Interaction):
         message_link = f"https://discord.com/channels/{message.guild.id}/{message.channel.id}/{message.id}"
         response += f"{i}. plass: {message_link} - {count} :VKek: fra <@{message.author.id}> \n"
 
-    await interaction.response.send_message(response)
-    
+    await interaction.followup.send(response)
+
 @tree.command(name='globalsync', description='Global sync meme kun for bot-eier.')
 @checks.has_permissions(administrator=True)  # Built-in check for admin permissions
 async def globalsync(interaction: discord.Interaction):
