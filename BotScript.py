@@ -11,7 +11,6 @@ load_dotenv()
 
 intents = discord.Intents.all()
 bot = discord.Client(command_prefix='!', intents=intents)
-bot1 = commands.Bot(command_prefix='!', intents=intents)
 tree = app_commands.CommandTree(bot)
 
 # Load the teams from the JSON file
@@ -88,7 +87,7 @@ async def test(interaction: discord.Interaction):
 
 @tree.command(name="tabelltips", description="Registrer ditt tabelltips med denne kommandoen. Klarer du se inn i fremtiden?")
 async def tabelltips(interaction: discord.Interaction):
-    user_id = interaction.user.id
+    user_id = str(interaction.user.id)
     if user_id in user_guesses:
         await interaction.response.send_message("Du har allerede registrert ditt tabelltips.")
         return
@@ -131,10 +130,11 @@ async def tabelltips(interaction: discord.Interaction):
         await new_interaction.response.send_message(f"Du valgte {selected_team} for {i}.plass.", ephemeral=True)
 
     user_guesses[user_id] = selected_teams
-
+    print(user_id)
     # Save user submissions to the JSON file
     with open(submits_file, 'w') as submits:
-        json.dump(user_guesses, submits)
+        json.dump(user_guesses, submits, indent=4)
+
 
     # Retrieve the registration channel ID for the current guild from JSON
     guild_id = interaction.guild.id  # Get the current guild ID
@@ -155,7 +155,9 @@ async def tabelltips(interaction: discord.Interaction):
    
 @tree.command(name="tipsetmitt", description="Se tabelltipset ditt")
 async def tipsetmitt(interaction: discord.Interaction):
-    user_id = interaction.user.id
+    user_id = str(interaction.user.id)  # Ensure it's a string
+    print(f"Checking for user_id: {user_id} in user_guesses: {user_guesses}")
+    print(user_id)
     if user_id in user_guesses:
         team_names = user_guesses[user_id]
         formatted_guesses = [f"{i+1}. {team_name}\n" for i, team_name in enumerate(team_names)]
