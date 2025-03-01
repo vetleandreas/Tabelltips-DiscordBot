@@ -50,7 +50,8 @@ async def on_ready():
     try:
         with open(submits_file, 'r') as submits:
             user_guesses = json.load(submits)
-            print("Loaded user submissions from file.")
+            print("User guesses loaded:", user_guesses)
+
     except FileNotFoundError:
         print("submits.json not found. Starting with empty user guesses.")
         user_guesses = {}
@@ -154,7 +155,7 @@ async def tabelltips(interaction: discord.Interaction):
    
 @tree.command(name="tipsetmitt", description="Se tabelltipset ditt")
 async def tipsetmitt(interaction: discord.Interaction):
-    user_id = str(interaction.user.id)  # Convert user_id to string
+    user_id = interaction.user.id
     if user_id in user_guesses:
         team_names = user_guesses[user_id]
         formatted_guesses = [f"{i+1}. {team_name}\n" for i, team_name in enumerate(team_names)]
