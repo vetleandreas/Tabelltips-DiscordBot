@@ -130,7 +130,6 @@ async def tabelltips(interaction: discord.Interaction):
         await new_interaction.response.send_message(f"Du valgte {selected_team} for {i}.plass.", ephemeral=True)
 
     user_guesses[user_id] = selected_teams
-    print(user_id)
     # Save user submissions to the JSON file
     with open(submits_file, 'w') as submits:
         json.dump(user_guesses, submits, indent=4)
@@ -156,8 +155,6 @@ async def tabelltips(interaction: discord.Interaction):
 @tree.command(name="tipsetmitt", description="Se tabelltipset ditt")
 async def tipsetmitt(interaction: discord.Interaction):
     user_id = interaction.user.id  # Ensure it's a string
-    print(f"Checking for user_id: {user_id} in user_guesses: {user_guesses}")
-    print(user_id)
     if user_id in user_guesses:
         team_names = user_guesses[user_id]
         formatted_guesses = [f"{i+1}. {team_name}\n" for i, team_name in enumerate(team_names)]
