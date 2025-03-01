@@ -87,7 +87,7 @@ async def test(interaction: discord.Interaction):
 
 @tree.command(name="tabelltips", description="Registrer ditt tabelltips med denne kommandoen. Klarer du se inn i fremtiden?")
 async def tabelltips(interaction: discord.Interaction):
-    user_id = str(interaction.user.id)
+    user_id = interaction.user.id
     if user_id in user_guesses:
         await interaction.response.send_message("Du har allerede registrert ditt tabelltips.")
         return
@@ -155,7 +155,7 @@ async def tabelltips(interaction: discord.Interaction):
    
 @tree.command(name="tipsetmitt", description="Se tabelltipset ditt")
 async def tipsetmitt(interaction: discord.Interaction):
-    user_id = str(interaction.user.id)  # Ensure it's a string
+    user_id = interaction.user.id  # Ensure it's a string
     print(f"Checking for user_id: {user_id} in user_guesses: {user_guesses}")
     print(user_id)
     if user_id in user_guesses:
