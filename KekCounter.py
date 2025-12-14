@@ -7,6 +7,7 @@ import os
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 import calendar
+import asyncio  # Import asyncio for sleep
 
 # Load environment variables from .env file
 load_dotenv()
@@ -28,8 +29,6 @@ async def on_ready():
         print(f"An error occurred while syncing globally: {e}")
     print(f"Bot connected as {bot.user}")
 
-
-import asyncio  # Import asyncio for sleep
 
 @tree.command(name="åretsmemes", description="Årlig meme leaderboard")
 @checks.has_permissions(administrator=True)  # Built-in check for admin permissions
@@ -129,6 +128,68 @@ async def månedensmemes(interaction: discord.Interaction, month: int = None, ye
         response += f"{i}. plass: {message_link} - {count} :VKek: fra <@{message.author.id}> \n"
 
     await interaction.followup.send(response)
+
+
+@tree.command(
+    name="quarter_top_reactions",
+    description="Find the top messages by total reactions in a given quarter"
+)
+@commands.has_permissions(administrator=True)
+@app_commands.describe(
+    channel="The channel to search",
+    year="Year number (e.g. 2024), defaults to current year",
+    quarter="Quarter number (1-4), defaults to current quarter"
+)
+async def quarter_top_reactions(
+    interaction: discord.Interaction,
+    channel: discord.TextChannel,
+    year: int = None,
+    quarter: int = None
+):
+    await interaction.response.defer()
+
+    # Default to current year/quarter if not given
+    now = datetime.utcnow()
+    if year is None:
+        year = now.year
+    if quarter is None:
+        quarter = (now.month - 1) // 3 + 1
+
+    # Validate quarter
+    if quarter not in (1, 2, 3, 4):
+        await interaction.followup.send("Quarter must be 1, 2, 3, or 4.")
+        return
+
+    # Calculate start and end of quarter
+    start_month = (quarter - 1) * 3 + 1
+    start_of_quarter = datetime(year, start_month, 1)
+    end_month = start_month + 2
+    days_in_end_month = calendar.monthrange(year, end_month)[1]
+    end_of_quarter = datetime(year, end_month, days_in_end_month, 23, 59, 59)
+
+    leaderboard = []
+
+    # Pull messages in that time range
+    async for message in channel.history(after=start_of_quarter, before=end_of_quarter, limit=None):
+        total_reactions = sum(reaction.count for reaction in message.reactions)
+        if total_reactions > 0:
+            leaderboard.append((message, total_reactions))
+
+    # Sort and get top 20
+    leaderboard = sorted(leaderboard, key=lambda x: x[1], reverse=True)[:10]
+
+    if not leaderboard:
+        await interaction.followup.send(f"No reactions were found in {year} Q{quarter}.")
+        return
+
+    # Build leaderboard message
+    response = f"**Topp 20 mld i {year} Q{quarter}**\n"
+    for i, (message, count) in enumerate(leaderboard, start=1):
+        message_link = f"https://discord.com/channels/{message.guild.id}/{message.channel.id}/{message.id}"
+        response += f"{i}. {message_link} - {count} emojis (av <@{message.author.id}>)\n"
+
+    await interaction.followup.send(response)
+
 
 @tree.command(name='globalsync', description='Global sync meme kun for bot-eier.')
 @checks.has_permissions(administrator=True)  # Built-in check for admin permissions
